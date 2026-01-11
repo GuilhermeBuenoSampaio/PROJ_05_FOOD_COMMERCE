@@ -100,8 +100,24 @@ def basic_profile(df: pd.DataFrame) -> Dict:
 
 
 def safe_read_excel(path: Path, sheet: Optional[str] = None) -> pd.DataFrame:
-    # engine openpyxl normalmente já está ok para .xlsx
-    return pd.read_excel(path, sheet_name=sheet, engine="openpyxl")
+    """
+    Garante retorno DataFrame.
+    - Se sheet=None, lê a primeira aba.
+    - Se por algum motivo o pandas retornar dict (múltiplas abas), pega a primeira.
+    """
+    if sheet is None:
+        # força primeira aba para evitar dict
+        df = pd.read_excel(path, sheet_name=0, engine="openpyxl")
+    else:
+        df = pd.read_excel(path, sheet_name=sheet, engine="openpyxl")
+
+    if isinstance(df, dict):
+        # fallback: pega a primeira aba
+        first_key = next(iter(df.keys()))
+        df = df[first_key]
+
+    return df
+
 
 
 def validate_year(year: int, sheet: Optional[str], strict_name_pattern: bool) -> Dict:
